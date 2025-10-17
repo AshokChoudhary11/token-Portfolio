@@ -1,45 +1,34 @@
 import { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { updateHoldings } from "../store/watchlistSlice";
 import type { CryptoData } from "./WatchList";
 
 interface HoldingInputProps {
   crypto: CryptoData;
-  watchlist: CryptoData[];
-  setWatchlist: (watchlist: CryptoData[]) => void;
   isEditing: boolean;
   onSave: () => void;
 }
 
 const HoldingInput: React.FC<HoldingInputProps> = ({
   crypto,
-  watchlist,
-  setWatchlist,
   isEditing,
   onSave,
 }) => {
   const [value, setValue] = useState<number>(crypto.holdings || 0);
-  const [savedValue, setSavedValue] = useState<number>(0);
-  const [hasChanged, setHasChanged] = useState<boolean>(false);
+  const [savedValue, setSavedValue] = useState<number>(crypto.holdings || 0);
+  const [hasChanged, setHasChanged] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dispatch = useDispatch();
 
-  // Load saved value for this crypto once
   useEffect(() => {
-    const savedList: CryptoData[] = JSON.parse(
-      localStorage.getItem("WatchList") || "[]"
-    );
-    const savedCrypto = savedList.find((item) => item.id === crypto.id);
-    const holdings = savedCrypto ? savedCrypto.holdings || 0 : 0;
-    setSavedValue(holdings);
-    setValue(holdings);
-  }, [crypto.id]);
+    setValue(crypto.holdings || 0);
+    setSavedValue(crypto.holdings || 0);
+  }, [crypto.holdings]);
 
-  // Focus input automatically when edit mode is on
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (isEditing && inputRef.current) inputRef.current.focus();
   }, [isEditing]);
 
-  // Track if current value differs from saved value
   useEffect(() => {
     setHasChanged(value !== savedValue);
   }, [value, savedValue]);
@@ -47,30 +36,17 @@ const HoldingInput: React.FC<HoldingInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = parseFloat(e.target.value);
     setValue(newVal);
-    const updatedList = watchlist.map((item) =>
-      item.id === crypto.id ? { ...item, holdings: newVal } : item
-    );
-    setWatchlist(updatedList);
   };
 
   const handleSave = () => {
-    const updatedList = watchlist.map((item) =>
-      item.id === crypto.id ? { ...item, holdings: value } : item
-    );
-
-    // Save only here
-    localStorage.setItem("WatchList", JSON.stringify(updatedList));
+    dispatch(updateHoldings({ id: crypto.id, holdings: value }));
     setSavedValue(value);
     setHasChanged(false);
     onSave();
   };
 
-  // if not editing, show value only
-  if (!isEditing) {
-    return <span>{savedValue || 0}</span>;
-  }
+  if (!isEditing) return <span>{savedValue || 0}</span>;
 
-  // if editing, show input + save button
   return (
     <div className="flex items-center gap-2">
       <input
@@ -79,8 +55,8 @@ const HoldingInput: React.FC<HoldingInputProps> = ({
         value={value}
         onChange={handleChange}
         placeholder="0.00"
-        className={`w-20 px-2 py-1 rounded  text-white ${
-          hasChanged ? "outline" : " "
+        className={`w-20 px-2 py-1 rounded text-white ${
+          hasChanged ? "outline" : ""
         } focus:outline-none focus:ring-2 focus:ring-[#a9e851]`}
       />
       {hasChanged && (

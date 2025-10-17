@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import HoldingInput from "./holdingInput";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../store/store";
+import {
+  addTokens,
+  removeToken,
+  // setWatchlist,
+  updatePrices,
+} from "../store/watchlistSlice";
+import { Plus, RefreshCcw } from "lucide-react";
 
 export interface CryptoData {
   id: string;
@@ -13,7 +22,8 @@ export interface CryptoData {
   };
   market_cap: number;
   total_volume: number;
-  holdings?: number;
+  holdings: number;
+  last_updated: string;
 }
 
 const Sparkline = ({
@@ -59,6 +69,8 @@ const normalizeSparkline = (prices: number[]) => {
 };
 
 export const WatchList = () => {
+  const dispatch = useDispatch();
+  const watchlist = useSelector((state: RootState) => state.watchlist.tokens);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
@@ -68,22 +80,18 @@ export const WatchList = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalHasMore, setModalHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [watchlist, setWatchlist] = useState<CryptoData[]>([]);
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const inProgressRef = useRef(false);
-  const [loaded, setLoaded] = useState(false);
+  // const [loaded, setLoaded] = useState(false);
   const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openEditId, setOpenEditId] = useState<string | null>(null);
-  // Number of rows per page
   const itemsPerPage = 10;
 
-  // Calculate current slice of watchlist
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedWatchlist = watchlist.slice(startIndex, endIndex);
 
-  // Calculate total pages dynamically
   const totalPages = Math.max(1, Math.ceil(watchlist.length / itemsPerPage));
   const totalResults = watchlist.length;
 
@@ -144,8 +152,6 @@ export const WatchList = () => {
     }
   };
 
-
-
   const handleRefresh = async () => {
     if (watchlist.length === 0) return;
 
@@ -159,15 +165,7 @@ export const WatchList = () => {
 
       const updatedData: CryptoData[] = await response.json();
 
-      // Update watchlist with fresh data
-      setWatchlist((prev) =>
-        prev.map((token) => {
-          const updated = updatedData.find((u) => u.id === token.id);
-          return updated
-            ? { ...token, ...updated, holdings: token.holdings }
-            : token;
-        })
-      );
+      dispatch(updatePrices(updatedData));
     } catch (err) {
       console.error("Error refreshing watchlist:", err);
     }
@@ -192,17 +190,17 @@ export const WatchList = () => {
     inProgressRef.current = false;
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem("WatchList");
-    if (saved) setWatchlist(JSON.parse(saved));
-    setLoaded(true);
-  }, []);
+  // useEffect(() => {
+  //   const saved = localStorage.getItem("WatchList");
+  //   if (saved) dispatch(setWatchlist(JSON.parse(saved)));
+  //   setLoaded(true);
+  // }, []);
 
-  useEffect(() => {
-    if (loaded) {
-      localStorage.setItem("WatchList", JSON.stringify(watchlist));
-    }
-  }, [watchlist.length, loaded]);
+  // useEffect(() => {
+  //   if (loaded) {
+  //     localStorage.setItem("WatchList", JSON.stringify(watchlist));
+  //   }
+  // }, [watchlist.length, loaded]);
 
   const isInWatchlist = (tokenId: string) => {
     return selectedTokens.some((item) => item === tokenId);
@@ -236,15 +234,16 @@ export const WatchList = () => {
             <div className="flex gap-4">
               <button
                 onClick={handleRefresh}
-                className="rounded-lg bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
+                className="rounded-lg flex gap-2 items-center bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
               >
+                <RefreshCcw size={16} color="#ffffff" strokeWidth={2} />
                 Refresh Prices
               </button>
               <button
                 onClick={handleAddToken}
-                className="bg-[#a9e851] rounded-lg px-4 py-2 text-black font-medium hover:bg-[#95d43d] transition-colors"
+                className="bg-[#a9e851] flex gap-2 items-center rounded-lg px-4 py-2 text-black font-medium hover:bg-[#95d43d] transition-colors"
               >
-                + Add Token
+                <Plus size={16} color="#000000" strokeWidth={2} /> Add Token
               </button>
             </div>
           </div>
@@ -334,8 +333,6 @@ export const WatchList = () => {
                     <td className="px-5 text-sm">
                       <HoldingInput
                         crypto={crypto}
-                        watchlist={watchlist}
-                        setWatchlist={setWatchlist}
                         isEditing={openEditId === crypto.id}
                         onSave={() => setOpenEditId(null)}
                       />
@@ -374,9 +371,7 @@ export const WatchList = () => {
 
                           <button
                             onClick={() => {
-                              setWatchlist((prev) =>
-                                prev.filter((item) => item.id !== crypto.id)
-                              );
+                              dispatch(removeToken(crypto.id));
                               setOpenMenuId(null);
                             }}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[#2a2a2a] w-full text-left"
@@ -589,27 +584,20 @@ export const WatchList = () => {
             <div className="px-4 bg-[#27272a] rounded-b-lg flex justify-end py-3 shadow-t-sm ">
               <button
                 onClick={() => {
-                  setWatchlist((prev) => {
-                    // Tokens user selected from modal
-                    const newlySelected = modalTokens.filter((token) =>
-                      selectedTokens.includes(token.id)
-                    );
+                  const newlySelected = modalTokens.filter((t) =>
+                    selectedTokens.includes(t.id)
+                  );
 
-                    // Merge: keep all old tokens + add any new unique ones
-                    const merged = [
-                      ...prev,
-                      ...newlySelected.filter(
-                        (t) => !prev.some((p) => p.id === t.id)
-                      ),
-                    ];
+                  // Add new tokens
+                  dispatch(addTokens(newlySelected));
 
-                    // If user deselected something (from previously added), remove it
-                    const cleaned = merged.filter((token) =>
-                      selectedTokens.includes(token.id)
-                    );
-
-                    return cleaned;
-                  });
+                  // Remove tokens that were in the watchlist but unselected
+                  const removedTokens = watchlist.filter(
+                    (token) => !selectedTokens.includes(token.id)
+                  );
+                  removedTokens.forEach((token) =>
+                    dispatch(removeToken(token.id))
+                  );
 
                   handleCloseModal();
                 }}
