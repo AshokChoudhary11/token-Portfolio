@@ -8,11 +8,12 @@ interface CryptoData {
   image: string;
   current_price: number;
   holdings: number;
+  last_updated: string;
 }
 
 export const HeroSection = () => {
   const [cryptoData, setCryptoData] = useState<
-    { name: string; percentage: number; color: string }[]
+    { name: string; percentage: number; color: string; last_updated: string }[]
   >([]);
   const [totalValue, setTotalValue] = useState<number>(0);
 
@@ -53,6 +54,7 @@ export const HeroSection = () => {
       name: `${token.name} (${token.symbol.toUpperCase()})`,
       percentage: ((token.current_price * token.holdings) / total) * 100,
       color: colors[index % colors.length],
+      last_updated: token.last_updated,
     }));
 
     setTotalValue(total);
@@ -91,7 +93,15 @@ export const HeroSection = () => {
           <div className="text-4xl">${totalValue.toFixed(2)}</div>
         </div>
         <div className="text-xs text-gray-400">
-          Last updated: {new Date().toLocaleTimeString()}
+          Last updated:{" "}
+          {cryptoData[0]
+            ? new Date(cryptoData[0].last_updated).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              })
+            : "--:--:--"}
         </div>
       </div>
       <div className="flex flex-col justify-between gap-2 w-1/2">

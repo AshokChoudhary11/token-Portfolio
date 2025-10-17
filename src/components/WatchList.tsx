@@ -81,7 +81,6 @@ export const WatchList = () => {
   // Calculate current slice of watchlist
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  console.log("pag", startIndex, endIndex, watchlist.length);
   const paginatedWatchlist = watchlist.slice(startIndex, endIndex);
 
   // Calculate total pages dynamically
@@ -145,15 +144,34 @@ export const WatchList = () => {
     }
   };
 
-  // const handleAddToken = () => {
-  //   setIsModalOpen(true);
-  //   setModalTokens([]);
-  //   setModalPage(1);
-  //   setModalHasMore(true);
-  //   setSearchQuery("");
-  //   inProgressRef.current = false;
-  //   fetchModalTokens(1, false);
-  // };
+
+
+  const handleRefresh = async () => {
+    if (watchlist.length === 0) return;
+
+    try {
+      const ids = watchlist.map((token) => token.id).join(",");
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&sparkline=true`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch updated prices");
+
+      const updatedData: CryptoData[] = await response.json();
+
+      // Update watchlist with fresh data
+      setWatchlist((prev) =>
+        prev.map((token) => {
+          const updated = updatedData.find((u) => u.id === token.id);
+          return updated
+            ? { ...token, ...updated, holdings: token.holdings }
+            : token;
+        })
+      );
+    } catch (err) {
+      console.error("Error refreshing watchlist:", err);
+    }
+  };
 
   const handleAddToken = () => {
     setIsModalOpen(true);
@@ -217,7 +235,7 @@ export const WatchList = () => {
             <div className="text-2xl font-semibold">Watchlist</div>
             <div className="flex gap-4">
               <button
-                // onClick={handleRefresh}
+                onClick={handleRefresh}
                 className="rounded-lg bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
               >
                 Refresh Prices
