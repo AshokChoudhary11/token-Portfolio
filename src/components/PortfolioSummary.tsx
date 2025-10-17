@@ -17,12 +17,14 @@ export const PortfolioSummary = ({ tokens }: PortfolioSummaryProps) => {
   }, [tokens]);
 
   return (
-    <div className="flex flex-col justify-between">
-      <div>
-        <div className="text-lg text-gray-400">Portfolio Total</div>
-        <div className="text-4xl">${totalValue.toFixed(2)}</div>
+    <div className="flex flex-col h-full justify-between">
+      <div className="gap-4 flex flex-col">
+        <div className="text-lg text-gray-400 font-medium ">
+          Portfolio Total
+        </div>
+        <div className="text-4xl font-medium mb-4 md:mb-0">${totalValue.toFixed(2)}</div>
       </div>
-      <div className="text-xs text-gray-400">
+      <div className="text-xs text-gray-400 ">
         Last updated:{" "}
         {new Date(lastUpdated).toLocaleTimeString("en-US", {
           hour: "2-digit",

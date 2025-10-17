@@ -19,8 +19,8 @@ const CryptoPieChart: React.FC<CryptoPieChartProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col md:flex-row items-center gap-6">
-      <div>
-        <svg width={120} height={120} className="rotate-[-90deg]">
+      <div className="w-60 h-60 md:w-40 md:h-40 mx-auto">
+        <svg className="rotate-[-90deg] w-full h-full" viewBox="0 0 120 120">
           {data.map((item, index) => {
             const dashArray = (item.percentage / 100) * circumference;
             const dashOffset =

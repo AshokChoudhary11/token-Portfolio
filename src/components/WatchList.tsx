@@ -8,7 +8,7 @@ import {
   // setWatchlist,
   updatePrices,
 } from "../store/watchlistSlice";
-import { Plus, RefreshCcw } from "lucide-react";
+import { Edit2, Plus, RefreshCcw, Star, Trash2 } from "lucide-react";
 
 export interface CryptoData {
   id: string;
@@ -224,20 +224,29 @@ export const WatchList = () => {
           token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : modalTokens;
+  const hasChanges =
+    selectedTokens.sort().join(",") !==
+    watchlist
+      .map((t) => t.id)
+      .sort()
+      .join(",");
 
   return (
     <>
       <div className="text-white  m-4">
         <div>
           <div className="flex justify-between mb-4">
-            <div className="text-2xl font-semibold">Watchlist</div>
+            <div className="text-2xl flex items-center gap-2 font-semibold">
+              <Star size={22} color="#a9e851" strokeWidth={2} fill="#a9e851" />
+              Watchlist
+            </div>
             <div className="flex gap-4">
               <button
                 onClick={handleRefresh}
                 className="rounded-lg flex gap-2 items-center bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
               >
                 <RefreshCcw size={16} color="#ffffff" strokeWidth={2} />
-                Refresh Prices
+                <div className="hidden md:block">Refresh Prices</div>
               </button>
               <button
                 onClick={handleAddToken}
@@ -249,145 +258,147 @@ export const WatchList = () => {
           </div>
 
           <div className="rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-[#27272a]">
-                <tr>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/5">
-                    Token
-                  </th>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
-                    Price
-                  </th>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
-                    24h %
-                  </th>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
-                    Sparkline (7d)
-                  </th>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
-                    Holdings
-                  </th>
-                  <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
-                    Value
-                  </th>
-                  <th className="px-5 py-4 "></th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedWatchlist.map((crypto) => (
-                  <tr
-                    key={crypto.id}
-                    className="hover:bg-[#27272a] transition-colors "
-                  >
-                    <td className="px-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-sm flex items-center justify-center">
-                          <img src={crypto.image} alt="" />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div
-                            className=""
-                            title={crypto.name.length > 9 ? crypto.name : ""}
-                          >
-                            {crypto.name.length > 9
-                              ? crypto.name.slice(0, 9) + "..."
-                              : crypto.name}
-                          </div>
-
-                          <div className="text-xs text-gray-400">
-                            ({crypto.symbol.toUpperCase()})
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5  text-sm">
-                      $
-                      {crypto.current_price.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td
-                      className={`px-5 text-sm ${
-                        crypto.price_change_percentage_24h >= 0
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {crypto.price_change_percentage_24h >= 0 ? "+" : ""}
-                      {crypto.price_change_percentage_24h?.toFixed(2) || "0.00"}
-                      %
-                    </td>
-                    <td className="px-5">
-                      {crypto.sparkline_in_7d?.price ? (
-                        <Sparkline
-                          data={normalizeSparkline(
-                            crypto.sparkline_in_7d.price
-                          )}
-                          isPositive={crypto.price_change_percentage_24h >= 0}
-                        />
-                      ) : (
-                        <div className="text-xs text-gray-400">No data</div>
-                      )}
-                    </td>
-                    <td className="px-5 text-sm">
-                      <HoldingInput
-                        crypto={crypto}
-                        isEditing={openEditId === crypto.id}
-                        onSave={() => setOpenEditId(null)}
-                      />
-                    </td>
-
-                    <td className="px-5 text-sm">
-                      $
-                      {crypto.holdings
-                        ? (crypto.holdings * crypto.current_price).toFixed(2)
-                        : 0}
-                    </td>
-                    <td className="relative px-5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(
-                            openMenuId === crypto.id ? null : crypto.id
-                          );
-                        }}
-                        className="p-2 text-gray-400  cursor-pointer rounded transition-all"
-                      >
-                        ⋯
-                      </button>
-
-                      {openMenuId === crypto.id && (
-                        <div className="absolute z-40 right-11 -mt-3 w-40 bg-[#1f2937] border border-[#3f3f46] rounded-lg shadow-lg z-10">
-                          <button
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              setOpenEditId(crypto.id);
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#2a2a2a] w-full text-left"
-                          >
-                            ✏️ Edit Holdings
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              dispatch(removeToken(crypto.id));
-                              setOpenMenuId(null);
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[#2a2a2a] w-full text-left"
-                          >
-                            🗑️ Remove
-                          </button>
-                        </div>
-                      )}
-                    </td>
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full min-w-[600px]">
+                <thead className="bg-[#27272a]">
+                  <tr>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/5">
+                      Token
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                      Price
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                      24h %
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                      Sparkline (7d)
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                      Holdings
+                    </th>
+                    <th className="px-5 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/6">
+                      Value
+                    </th>
+                    <th className="px-5 py-4 "></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedWatchlist.map((crypto) => (
+                    <tr
+                      key={crypto.id}
+                      className="hover:bg-[#27272a] transition-colors"
+                    >
+                      <td className="px-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-sm flex items-center justify-center">
+                            <img src={crypto.image} alt="" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div
+                              className=""
+                              title={crypto.name.length > 9 ? crypto.name : ""}
+                            >
+                              {crypto.name.length > 9
+                                ? crypto.name.slice(0, 9) + "..."
+                                : crypto.name}
+                            </div>
 
-            <div className="px-5 py-4 bg-[#27272a] border-t border-[#3f3f46] flex justify-between items-center text-sm text-gray-400">
-              {/* Left side: result range */}
+                            <div className="text-xs text-gray-400">
+                              ({crypto.symbol.toUpperCase()})
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5  text-sm">
+                        $
+                        {crypto.current_price.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td
+                        className={`px-5 text-sm ${
+                          crypto.price_change_percentage_24h >= 0
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {crypto.price_change_percentage_24h >= 0 ? "+" : ""}
+                        {crypto.price_change_percentage_24h?.toFixed(2) ||
+                          "0.00"}
+                        %
+                      </td>
+                      <td className="px-5">
+                        {crypto.sparkline_in_7d?.price ? (
+                          <Sparkline
+                            data={normalizeSparkline(
+                              crypto.sparkline_in_7d.price
+                            )}
+                            isPositive={crypto.price_change_percentage_24h >= 0}
+                          />
+                        ) : (
+                          <div className="text-xs text-gray-400">No data</div>
+                        )}
+                      </td>
+                      <td className="px-5 text-sm">
+                        <HoldingInput
+                          crypto={crypto}
+                          isEditing={openEditId === crypto.id}
+                          onSave={() => setOpenEditId(null)}
+                        />
+                      </td>
+
+                      <td className="px-5 text-sm">
+                        $
+                        {crypto.holdings
+                          ? (crypto.holdings * crypto.current_price).toFixed(2)
+                          : 0}
+                      </td>
+                      <td className="relative px-5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(
+                              openMenuId === crypto.id ? null : crypto.id
+                            );
+                          }}
+                          className="p-2 text-gray-400  cursor-pointer rounded transition-all"
+                        >
+                          ⋯
+                        </button>
+
+                        {openMenuId === crypto.id && (
+                          <div className="absolute md:fixed  right-11 top-full -mt-3 w-40 bg-[#27272a] rounded-lg shadow-lg z-50 ">
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                setOpenEditId(crypto.id);
+                              }}
+                              className="flex items-center border-b border-[#3f3f46] gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#2a2a2a] w-full text-left"
+                            >
+                              <Edit2 size={14} strokeWidth={1} /> Edit Holdings
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                dispatch(removeToken(crypto.id));
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[#2a2a2a] w-full text-left"
+                            >
+                              <Trash2 size={16} strokeWidth={1} /> Remove
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-5 py-4 justify-between  bg-[#27272a] border-t border-[#3f3f46] flex justify-between items-center text-sm text-gray-400">
+              {/* ...pagination */}
               <div>
                 {totalResults === 0 ? (
                   "No results"
@@ -440,11 +451,9 @@ export const WatchList = () => {
           </div>
         </div>
       </div>
-      {/* Add Token Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1e1e1e] rounded-lg w-full max-w-md shadow-2xl">
-            {/* Modal Header */}
+        <div className="fixed inset-0 bg-black/80  flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e1e1e] rounded-lg w-full max-w-2xl shadow-2xl">
             <div className="p-6 border-b border-gray-700">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Add Token</h2>
@@ -456,7 +465,6 @@ export const WatchList = () => {
                 </button>
               </div>
 
-              {/* Search Input */}
               <input
                 type="text"
                 placeholder="Search tokens (e.g., ETH, SOL)..."
@@ -466,18 +474,16 @@ export const WatchList = () => {
               />
             </div>
 
-            {/* Trending Section */}
             <div className="px-6 pt-4">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                 Trending
               </h3>
             </div>
 
-            {/* Token List with Scroll */}
             <div
               ref={modalScrollRef}
               onScroll={handleScroll}
-              className="px-6 pb-6 max-h-96 overflow-y-auto "
+              className="px-6 pb-6 max-h-96 overflow-y-auto no-scrollbar"
             >
               {filteredTokens.map((token) => (
                 <div
@@ -588,10 +594,8 @@ export const WatchList = () => {
                     selectedTokens.includes(t.id)
                   );
 
-                  // Add new tokens
                   dispatch(addTokens(newlySelected));
 
-                  // Remove tokens that were in the watchlist but unselected
                   const removedTokens = watchlist.filter(
                     (token) => !selectedTokens.includes(token.id)
                   );
@@ -601,10 +605,12 @@ export const WatchList = () => {
 
                   handleCloseModal();
                 }}
-                disabled={selectedTokens.length === 0}
-                className={` py-1 text-sm px-4 rounded-lg transition-colors ${
-                  selectedTokens.length === 0
-                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                disabled={!hasChanges}
+                className={` py-1 text-sm px-4  ${
+                  !hasChanges ? "cursor-disabled" : "cursor-pointer"
+                } rounded-lg transition-colors ${
+                  !hasChanges
+                    ? "bg-[#27272a] border border-[#] text-gray-400 cursor-not-allowed"
                     : "bg-[#a9e851] text-black hover:bg-[#95d43d]"
                 }`}
               >
