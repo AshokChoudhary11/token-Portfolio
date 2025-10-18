@@ -26,7 +26,7 @@ export const NavBar = () => {
         </div>
       ) : (
         <button
-          className="flex p-2 bg-[#a9e851] text-[#000000] rounded-full px-6 items-center justify-center gap-2"
+          className="flex p-2 cursor-pointer bg-[#a9e851] text-[#000000] rounded-full px-6 items-center justify-center gap-2"
           onClick={handleConnectWallet}
         >
           <CreditCard size={20} color="#000000" strokeWidth={2} />

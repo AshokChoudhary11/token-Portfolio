@@ -8,7 +8,7 @@ import {
   // setWatchlist,
   updatePrices,
 } from "../store/watchlistSlice";
-import { Edit2, Plus, RefreshCcw, Star, Trash2 } from "lucide-react";
+import { Edit2, Loader2, Plus, RefreshCcw, Star, Trash2 } from "lucide-react";
 
 export interface CryptoData {
   id: string;
@@ -86,6 +86,7 @@ export const WatchList = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openEditId, setOpenEditId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [refreshLoader, setRefreshLoader] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -155,6 +156,7 @@ export const WatchList = () => {
 
   const handleRefresh = async () => {
     if (watchlist.length === 0) return;
+    setRefreshLoader(true);
 
     try {
       const ids = watchlist.map((token) => token.id).join(",");
@@ -170,6 +172,7 @@ export const WatchList = () => {
     } catch (err) {
       console.error("Error refreshing watchlist:", err);
     }
+    setRefreshLoader(false);
   };
 
   const handleAddToken = () => {
@@ -232,14 +235,23 @@ export const WatchList = () => {
             <div className="flex gap-4">
               <button
                 onClick={handleRefresh}
-                className="rounded-lg flex gap-2 items-center bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
+                className="rounded-lg flex gap-2 current-pointer items-center bg-[#27272a] px-4 py-2 hover:bg-[#3f3f46] transition-colors"
               >
-                <RefreshCcw size={16} color="#ffffff" strokeWidth={2} />
+                {refreshLoader ? (
+                  <Loader2
+                    size={16}
+                    color="#ffffff"
+                    strokeWidth={2}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <RefreshCcw size={16} color="#ffffff" strokeWidth={2} />
+                )}
                 <div className="hidden md:block">Refresh Prices</div>
               </button>
               <button
                 onClick={handleAddToken}
-                className="bg-[#a9e851] flex gap-2 items-center rounded-lg px-4 py-2 text-black font-medium hover:bg-[#95d43d] transition-colors"
+                className="bg-[#a9e851] cursor-pointer flex gap-2 items-center rounded-lg px-4 py-2 text-black font-medium hover:bg-[#95d43d] transition-colors"
               >
                 <Plus size={16} color="#000000" strokeWidth={2} /> Add Token
               </button>
@@ -373,7 +385,7 @@ export const WatchList = () => {
                                 setOpenMenuId(null);
                                 setOpenEditId(crypto.id);
                               }}
-                              className="flex items-center border-b border-[#3f3f46] gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#2a2a2a] w-full text-left"
+                              className="flex cursor-pointer items-center border-b border-[#3f3f46] gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#2a2a2a] w-full text-left"
                             >
                               <Edit2 size={14} strokeWidth={1} /> Edit Holdings
                             </button>
@@ -383,7 +395,7 @@ export const WatchList = () => {
                                 dispatch(removeToken(crypto.id));
                                 setOpenMenuId(null);
                               }}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[#2a2a2a] w-full text-left"
+                              className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[#2a2a2a] w-full text-left"
                             >
                               <Trash2 size={16} strokeWidth={1} /> Remove
                             </button>
