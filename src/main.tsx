@@ -4,11 +4,14 @@ import "./index.css";
 import App from "./App.tsx";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
+import WalletProvider from "./providers/WagmiProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
+      <WalletProvider>
+        <App />
+      </WalletProvider>
     </Provider>
   </StrictMode>
 );

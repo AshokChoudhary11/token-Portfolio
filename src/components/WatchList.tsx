@@ -82,10 +82,11 @@ export const WatchList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const inProgressRef = useRef(false);
-  // const [loaded, setLoaded] = useState(false);
   const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openEditId, setOpenEditId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+
   const itemsPerPage = 10;
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -189,18 +190,6 @@ export const WatchList = () => {
     setModalPage(1);
     inProgressRef.current = false;
   };
-
-  // useEffect(() => {
-  //   const saved = localStorage.getItem("WatchList");
-  //   if (saved) dispatch(setWatchlist(JSON.parse(saved)));
-  //   setLoaded(true);
-  // }, []);
-
-  // useEffect(() => {
-  //   if (loaded) {
-  //     localStorage.setItem("WatchList", JSON.stringify(watchlist));
-  //   }
-  // }, [watchlist.length, loaded]);
 
   const isInWatchlist = (tokenId: string) => {
     return selectedTokens.some((item) => item === tokenId);
@@ -359,17 +348,26 @@ export const WatchList = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            setMenuPosition({ x: rect.right, y: rect.bottom });
                             setOpenMenuId(
                               openMenuId === crypto.id ? null : crypto.id
                             );
                           }}
-                          className="p-2 text-gray-400  cursor-pointer rounded transition-all"
+                          className="p-2 text-gray-400 cursor-pointer rounded transition-all"
                         >
                           ⋯
                         </button>
 
                         {openMenuId === crypto.id && (
-                          <div className="absolute md:fixed  right-11 top-full -mt-3 w-40 bg-[#27272a] rounded-lg shadow-lg z-50 ">
+                          <div
+                            className="fixed z-50 bg-[#27272a] rounded-lg shadow-lg w-40"
+                            style={{
+                              top: `${menuPosition.y}px`,
+                              left: `${menuPosition.x - 160}px`,
+                            }}
+                          >
                             <button
                               onClick={() => {
                                 setOpenMenuId(null);
